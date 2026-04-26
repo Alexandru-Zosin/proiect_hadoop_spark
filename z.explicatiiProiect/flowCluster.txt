@@ -1,0 +1,48 @@
+master container:
+  - NameNode: catalog HDFS
+  - Spark Master: catalog resurse Spark
+  - Jupyter: interfata de lucru
+  - Spark Driver: cand rulezi notebook
+
+worker containers:
+  - DataNode: stocare blocuri HDFS
+  - Spark Worker: CPU/RAM pentru procesare
+  - Spark Executor: procese care executa jobul
+
+HDFS:
+  - namespace logic: /project/raw
+  - date fizice: blocuri in /hadoop/dfs/data pe workeri
+
+Spark:
+  - primeste codul din notebook
+  - cere resurse de la Spark Master
+  - citeste locatiile blocurilor din NameNode
+  - rulează taskuri pe executors
+
+Exemplu:
+
+df = spark.read.parquet("hdfs://master:9000/project/raw/dataset.parquet")
+df.groupBy("category").count().show()
+
+Flow:
+
+1. Jupyter rulează pe master.
+2. Codul creează Spark Driver.
+3. Driverul se conectează la Spark Master: spark://master:7077.
+4. Spark Master alocă executors pe worker1 și worker2.
+5. Spark citește calea HDFS: hdfs://master:9000/project/raw/dataset.parquet.
+6. Clientul întreabă NameNode-ul: unde sunt blocurile acestui fișier?
+7. NameNode-ul răspunde: block_1 este pe worker1 și worker2, block_2 este pe worker1 și worker2 etc.
+8. Executors de pe workeri citesc blocurile de la DataNodes.
+9. Taskurile Spark procesează datele.
+10. Rezultatul agregat revine la Driver/Jupyter.
+//////////////////////////////////////////////////////////////////
+structură HDFS:
+(logica de impartire in blocuri se aplica pt. TOATE DIRECTOARELE de mai jos, 
+HDFS NU le trateaza diferit pt. ca sunt raw, clean, output etc si NU date)
+
+/project/raw/          date originale: csv/parquet
+/project/clean/        date curățate
+/project/processed/    date transformate pentru analiză/ML
+/project/output/       rezultate finale
+/project/models/       modele ML salvate

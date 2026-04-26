@@ -1,0 +1,27 @@
+0. se descarca setul de date si se pune in data/
+https://www.kaggle.com/datasets/mahoora00135/flights
+
+1. Se creeaza folderul (sau se cloneaza de pe Git si se schimba cu comanda cd in rootul sau
+(adica in "proiect_spark_hadoop"))
+
+1.1 Se descarca, de la linkurile (se apasa pe HTTP) si se pun langa Dockerfile (in acelasi folder): 
+
+https://www.apache.org/dyn/closer.cgi/hadoop/common/hadoop-3.5.0/hadoop-3.5.0.tar.gz
+
+https://spark.apache.org/releases/spark-release-3-5-8.html
+Choose a Spark release:  3.5.8 (Jan 15 2026)
+Choose a package type: Pre-built for Apache Hadoop 3.3 and later
+
+2. Se ruleaza comenzile (in powershell, pe PC):
+
+nerdctl compose build
+nerdctl compose up
+
+3. Se verifica cele 3 containere pornite in docker desktop (dupa ce se opresc logurile de generat 
+in terminal)
+
+http://localhost:8080   -> Spark UI (trebuie ss vezi 2 workers)
+http://localhost:9870   -> HDFS UI (trebuie sa vezi DataNodes)
+http://localhost:8888   -> Jupyter (verifici ca porneste)
+
+Daca astea merg => clusterul e OK => se deschide Jupyter si se ruleaza notebook-urile in ordine

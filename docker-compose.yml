@@ -1,0 +1,53 @@
+services:
+  master:
+    build: . # foloseste dockerfile ul din folderul curent 
+    container_name: spark-hdfs-master
+    hostname: master # nume intern in retea Docker
+    privileged: true
+    ports:
+      - "8888:8888" # jupyter #link port laptop : container 
+      - "8080:8080" # spark master ui
+      - "9870:9870" # hdfs namenode UI
+      - "7077:7077" # spark master endpoint
+      - "9000:9000" # hdfs endpoint 
+    volumes:
+      - ./notebooks:/notebooks # leaga foldere windows(PC) de foldere linux din containere
+      - ./data:/data
+      - ./scripts:/scripts
+    networks: # toate containerele in aceeasi retea pt a permite sa comunice
+      - spark-hdfs-net
+    command: ["/scripts/start-master.sh"] 
+# comanda rulata automat cand porneste containerul
+
+  worker1:
+    build: .
+    container_name: spark-hdfs-worker-1
+    hostname: worker1
+    privileged: true
+    depends_on:
+      - master
+    volumes:
+      - ./data:/data
+      - ./scripts:/scripts
+    networks:
+      - spark-hdfs-net
+    command: ["/scripts/start-worker.sh"]
+# fiecare worker porneste automat dataNode + Spark Worker, DUPA master (depends_on)
+
+  worker2:
+    build: .
+    container_name: spark-hdfs-worker-2
+    hostname: worker2
+    privileged: true
+    depends_on:
+      - master
+    volumes:
+      - ./data:/data
+      - ./scripts:/scripts
+    networks:
+      - spark-hdfs-net
+    command: ["/scripts/start-worker.sh"]
+
+networks:
+  spark-hdfs-net:
+    driver: bridge

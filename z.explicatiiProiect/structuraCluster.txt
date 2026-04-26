@@ -1,0 +1,89 @@
+??? Ce este HDFS = hadoop distr file system???
+- este un filesystem logic care ARATA ca un singur filesystem:
+hdfs://master:9000/project/raw/dataset.parquet
+.... dar, (in spate) foloseste mai multe containere/VM uri pt stocare
+NameNode: DOAR metadata ---> manager metadata pt. HDFS, spune unde sunt blocurile
+DataNode1: blocuri de date (---//--- vezi mai jos); stocheaza blocurile fizice
+si le serveste catre Spark + raportare perioadica la NameNode
+DataNode2: blocuri facute din datele initiale (dataset.parquet)
+
+
+spark-hdfs-master
+- HDFS NameNode
+1. stocheaza metadata (ce fisiere exista, ce directoare exista, pe ce DataNodes
+se afla fiecare bloc, dimensiuni, permisiuni etc.) - NU STOCHEAZA DATELE propriu zise
+2. deci, masterul NU RULEAZA DataNode (doar in workeri rulam asa ceva)
+3. HDFS imparte fisierele in blocuri (implicit, de 128MB)
+4. la factor de replicare = 2 (vezi start-master.sh), fiecare bloc ajunge pe 
+AMBII workeri 
+* se putea face replication = 1 si NU se facea duplicare completa
+** daca aveam 10 workeri, fiecare bloc se copia de 2 ori pe 2 din cei 10 workeri,
+NU pe toti (decidea NameNode in spate, in functie de balansare etc.)
+ex.: 
+Bloc	Copie 1	Copie 2
+B1	        W3	    W7
+B2	        W1	    W9
+B3	        W4	    W2
+replication = 3 (default în Hadoop)
+Bloc	Copii
+B1	    Wrkr
+1, W5, W9
+B2	    W2, W3, W7
+
+- Spark master (coordoneaza aplicatiile Spark, SPark Driver trimite taskrui prin el):
+1. primeste joburi spark
+2. stie ce spark workeri sunt disponibili
+3. aloca executoare pe workeri
+4. monitorizeaza aplicatiile
+* in proiectul nostru, spark master NU este si Spark worker (separare concerns)
+
+- Jupyter lab
+- client hdfs/spark-submit/pyspark
+(este client pt ca pe master poti trimite comenzi catre CLUSTER - masterul este punctul
+de control de unde se lanseaza joburi; NU inseamna ca masterul executa singur 
+toata procesoarea -> o distribuei la Spark Workers)
+
+spark-hdfs-worker-1, -2
+- HDFS DATANode
+1. stocheaza DATELE PROPRIU-ZISE
+
+- Spark WORKER
+1. ofera CPU pt executia joburilor Spark
+2. porneste Spark Executors pt aplicatii (executa taskuri, citeste date, proceseaza
+partitii, returneaza rezultate)
+
+Din browser (PC) accesam: http://localhost:8888, 8080, 9870 samd. pt ca in 
+compose avem maparea porturilor (se intra prin port forwarding)
+
+
+!!!
+* Fisierele (datele) SUNT distribuite intre workeri daca sunt puse in HDFS:
+cand rulam "hdfs dfs -put /data/file.parquet /project/raw", HDFS sparge 
+fisierul in blocuri si le pune pe DataNodes iar, pentru proiect,
+citirea trebuie sa se faca din HDFS (master:9000/project/raw/file.parquet etc.)
+
+aka logic: un singur filesystem HDFS, dar FIZIC: mai multe masini
+
+**
+Cand scrii "hdfs dfs -mkdir -p /project/raw"
+nu creezi /project/raw IN Linux, CI creezi o intrare metadata in HDFS, iar datele
+fisierelor din acest path sunt pastrate fizic ca blocuri in DATANODES (ca shardingul
+la MongoDB)
+
+(Linux path:
+  /data/file.csv
+  exista in filesystem-ul containerului
+
+HDFS path:
+  /project/raw/file.csv
+  exista in namespace-ul HDFS gestionat de NameNode)
+
+** comanda hdfs poate fi rulata in containere caci Dockerfile ul seteaza pathurile
+pt HADOOP_HOME si pt PATH si stie unde sa gaseasca executabilul (/bin/hdfs);
+"dfs" este subcomanda pt operatii pe file system (API ul pt filesystemul distribuit, 
+basically) --- filesystem diferit de cel Linux din containre
+
+*** 
+
+
+

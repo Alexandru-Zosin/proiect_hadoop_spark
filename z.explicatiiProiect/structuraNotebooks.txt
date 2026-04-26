@@ -1,0 +1,58 @@
+01_ingest
+
+- face ingestia datelor: verifica daca spark poate citi fisierele incarcate in hdfs 
+si salveaza o varianta standardizata in /clean (datele curate)
+
+1. se conecteaza notebookul la Spark Master
+2. se definesc pathurile HDFS
+3. citeste .csv urile si .parqueturile 
+4. face o verificare a schemei cu count() si printSchema()
+5. transforma toate coloanele in upper_case (Sql devine mai clar, se evita diferente/bugs, 
+csv si parquet pot avea diferente de naming)
+6. se scriu datele in /clean
+
+02_eda_sql: statistici descriptive, outlieri, corelatii, joins, agregari, grafice simple,
+interogari SQL 
+
+- se creeaza view uri SQL pt lucru cu Sparksql
+- statistici descriptive simple pe coloane numerice: count, mean: stddev, min, max
+ex.: pt intarzieri skewness va fi prob. pozitiv (distr. asimetrica)
+- outlieri pe arrival_delay cu IQR
+
+- se testeaza corelatii simple de pilda arrival_delay si departure_delay, air_time, distance, ... 
+
+03_cleaning_features
+- tratare null uri (in 0 sau eliminate)
+- eliminare zboruri anulate si deviate
+- pastrare zboruri cu target valid (arrival delay e targetul)
+- se aleg feature uri numerice: month, day, d_o_w, scheduled_departure, dep_delay, taxi_out: timp 
+pana la decolare, scheduled_time: durata planificata , distance
+- se aleg feature uri categoriale: airline, origin_airport, desination_airport pe care se fac 
+stringindexer, urmat de onehotencoder
+- se elimina outlieri extremi pe Arrival_dealy (regresia linaara este sensibila la outleieri)
+
+salveaza datasetul procest
+
+04_ml antreneaza si compara Linear Regression cu Random Forest 
+- folosetse 20% din date (cluster mic, 2 workeri, 1gb executor)
+
+targetul este Arrival_delay
+(Linear regression: a_d = b0 + b1 * x1 + ... )
+
+pipeline: indexer + 1hotencoder + vectorassembler + linear regression
+
+apoi fit si transform
+
+- se impart datele train/test (80% train, 20% test pt calcul metrice pe date nevazute)
+
+RandomForestRegressor: construieste mai multi arbori de decizie si combina rezultatele
+
+- aceeasi preprocesare
+
+Metrici ML : RMSE (cat mai mic, penalizeaza erori mari), MAE(cat mai mic - er abs medie 
+in minute), R squared (cat mai mare - variatia targetului explicata de model)
+
+=> in model_metrics 
+
+05_performance:
+- csv vs parquet- cache vsno cache, repartition vs coalesce
