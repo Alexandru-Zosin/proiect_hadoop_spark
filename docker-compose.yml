@@ -4,6 +4,7 @@ services:
     container_name: spark-hdfs-master
     hostname: master # nume intern in retea Docker
     privileged: true
+    mem_limit: 3g
     ports:
       - "8888:8888" # jupyter #link port laptop : container 
       - "8080:8080" # spark master ui
@@ -24,6 +25,7 @@ services:
     container_name: spark-hdfs-worker-1
     hostname: worker1
     privileged: true
+    mem_limit: 3g
     depends_on:
       - master
     volumes:
@@ -39,6 +41,7 @@ services:
     container_name: spark-hdfs-worker-2
     hostname: worker2
     privileged: true
+    mem_limit: 3g
     depends_on:
       - master
     volumes:

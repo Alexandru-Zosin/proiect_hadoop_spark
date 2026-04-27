@@ -1,4 +1,4 @@
-0. se descarca setul de date si se pune in data/
+0. se descarca setul de date si se pune in data/ (se creeaza folderul)
 https://www.kaggle.com/datasets/mahoora00135/flights
 
 1. Se creeaza folderul (sau se cloneaza de pe Git si se schimba cu comanda cd in rootul sau

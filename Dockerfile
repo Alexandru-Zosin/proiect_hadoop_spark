@@ -50,7 +50,7 @@ RUN tar -xzf /tmp/spark-3.5.8-bin-hadoop3.tgz -C /opt \
 RUN pip3 install \
     pyspark==3.5.8 \
     py4j \
-    ipykernel \ 
+    ipykernel \
     jupyterlab \
     pandas \
     numpy \
